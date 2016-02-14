@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>CanvasMatrixImageRunning</title>
+	<style>
+		body {
+			text-align: center;
+			background: black;
+			color: white;
+		}
+		button {
+			margin-left: 10px;
+			/*font-family: "Serif";*/
+			font-weight: bold;
+		}
+	</style>
+</head>
+<body>
+
+<header><h2>CanvasMatrixImage by Supanut :)</h2></header>
+<canvas id="renderCanvas" width="800" height="600" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<br>
+<button onclick="copyShape();">Copy Pattern</button>
+<button onclick="clearCanvas();">Clear Canvas</button>
+<button onclick="normalRender();">Normal Render</button>
+<button onclick="savePattern();">Save Pattern</button>
+<button onclick="running();">Run / Pause</button>
+<button onclick="changingColor();">Color / Pause</button>
+<button onclick="shiftLeft();">Shift Left</button>
+<button onclick="shiftRight();">Shift Right</button>
+<!-- <button onclick="shiftRight();">DrawingMode</button> -->
+
+<script>
+var border = 1; 
+var box_size = 20;
+var canvas = document.getElementById("renderCanvas");
+var context = canvas.getContext('2d');
+var width = canvas.width;
+var height = canvas.height;
+var row = Math.ceil(height / box_size); // ceil or floor --> good way % = 0
+var col = Math.ceil(width / box_size);
+var fill_color;
+var shift_row = 0;
+var check_clear = false;
+var canRun = true;
+var canChangeColor = true;
+var drawing = true;
+var testing = false;
+var borderColor;
+var rowShape, colShape;
+
+var shape = [
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0001100001100001100000011000011111111000",
+"0001100001100001100000011000011111111000",
+"0001100001100001100110011000011000000000",
+"0001100001100001100110011000011000000000",
+"0001100001100001100110011000011000000000",
+"0001100001100001100110011000011000000000",
+"0001111111100001100110011000011000000000",
+"0001111111100001100110011000011000000000",
+"0000001100000001100110011000011000000000",
+"0000001100000001100110011000011000000000",
+"0000001100000001100110011000011000000000",
+"0000001100000001100110011000011000000000",
+"0000001100000001100110011000011000000000",
+"0000001100000001100110011000011000000000",
+"0000001100000001111111111000011111111000",
+"0000001100000001111111111000011111111000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000"
+];
+
+var shape2 = [
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000011110001111000000000000000",
+"0000000000000111111011111100000000000000",
+"0000000000001111111111111110000000000000",
+"0000000000011111111111111111000000000000",
+"0000000000111111111111111111100000000000",
+"0000000000111111111111111111100000000000",
+"0000000000111111111111111111100000000000",
+"0000000000111111111111111111100000000000",
+"0000000000011111111111111111000000000000",
+"0000000000001111111111111110000000000000",
+"0000000000000111111111111100000000000000",
+"0000000000000011111111111000000000000000",
+"0000000000000001111111110000000000000000",
+"0000000000000000111111100000000000000000",
+"0000000000000000011111000000000000000000",
+"0000000000000000001110000000000000000000",
+"0000000000000000000100000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000"
+];
+
+var shape3 = [
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000001111000000000000001111000000000",
+"0000000010000100000000000010000100000000",
+"0000000100000010111111110100000010000000",
+"0000000100111011000000001101110010000000",
+"0000000100111100000000000011110010000000",
+"0000000100111000000000000001110010000000",
+"0000000010010000000000000000100100000000",
+"0000000001100000000000000000011000000000",
+"0000000000100001110000111000010000000000",
+"0000000001000011111001111100001000000000",
+"0000000001000110011001100110001000000000",
+"0000000001000110011001100110001000000000",
+"0000000001000111110000111110001000000000",
+"0000000001000011100000011100001000000000",
+"0000000001000000000000000000001000000000",
+"0000000001000000011111100000001000000000",
+"0000000001000000000110000000001000000000",
+"0000000000100000000000000000010000000000",
+"0000000000100001000000001000010000000000",
+"0000000000010000110000110000100000000000",
+"0000000000001000011111100001000000000000",
+"0000000000000100000000000010000000000000",
+"0000000000000011000000001100000000000000",
+"0000000000000000111111110000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000"
+];
+// var shape = [
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000011110001111000000000000000",
+// "0000000000000111111011111100000000000000",
+// "0000000000001111111111111110000000000000",
+// "0000000000011111111111111111000000000000",
+// "0000000000111111111111111111100000000000",
+// "0000000000111111111111111111100000000000",
+// "0000000000111111111111111111100000000000",
+// "0000000000111111111111111111100000000000",
+// "0000000000011111111111111111000000000000",
+// "0000000000001111111111111110000000000000",
+// "0000000000000111111111111100000000000000",
+// "0000000000000011111111111000000000000000",
+// "0000000000000001111111110000000000000000",
+// "0000000000000000111111100000000000000000",
+// "0000000000000000011111000000000000000000",
+// "0000000000000000001110000000000000000000",
+// "0000000000000000000100000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000",
+// "0000000000000000000000000000000000000000"
+// ];
+
+var kuma = [
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000001111000000000000001111000000000",
+"0000000010000100000000000010000100000000",
+"0000000100000010111111110100000010000000",
+"0000000100000011000000001100000010000000",
+"0000000111000100000000000010001110000000",
+"0000000111101000000000000001011110000000",
+"0000000011110000000000000000111100000000",
+"0000000001100000000000000000011000000000",
+"0000000000100001110000111000010000000000",
+"0000000001000011111001111100001000000000",
+"0000000001000011111001111100001000000000",
+"0000000001000011111001111100001000000000",
+"0000000001000001110000111000001000000000",
+"0000000001000000000000000000001000000000",
+"0000000001000000011111100000001000000000",
+"0000000001000000100000010000001000000000",
+"0000000001000001000110001000001000000000",
+"0000000000100001000110001000010000000000",
+"0000000000100001011001101000010000000000",
+"0000000000010000100000010000100000000000",
+"0000000000001000011111100001000000000000",
+"0000000000000100000000000010000000000000",
+"0000000000000011000000001100000000000000",
+"0000000000000000111111110000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000",
+"0000000000000000000000000000000000000000"
+]
+// ======================= Generate Shape Array =========================
+var shape_status;
+
+function initValue_GenShape() {
+	shape_status = new Array(row);
+	for (var i = 0; i < row; i++) {
+		shape_status[i] = new Array(col);
+		for (var j = 0; j < col; j++) {
+			shape_status[i][j] = 0;
+		}
+	}
+}
+
+function printShape() {
+	for (var i = 0; i < row; i++) {
+		output = "";
+		for (var j = 0; j < col; j++) {
+			output += shape_status[i][j];
+		}
+		console.log("shape[" + (i < 10 ? 0 : "") + i + "] : " + output);
+	}
+}
+
+function shapeToString() {
+	var shapeString = "";
+	for (var i = 0; i < row; i++) {
+		shapeString += (i == 0) ? "" : ",";
+		for (var j = 0; j < col; j++) {
+			shapeString += shape_status[i][j];
+		}shape_status
+	}
+	return shapeString;
+}
+
+function copyToClipboard(text) {
+	window.prompt("Copy to clipboard", text);
+}
+
+function copyShape() {
+	copyToClipboard(shapeToString());
+}
+
+function getCursorPosition(event) {
+	var rect = canvas.getBoundingClientRect();
+    var x = Math.floor((event.clientX - rect.left) / box_size);
+    var y = Math.floor((event.clientY - rect.top) / box_size);
+    return {x: x, y: y}
+}
+
+function fillBoxAtCursorPosition(event) {
+	var cursorPosition = getCursorPosition(event);
+    fillBox(cursorPosition.x, cursorPosition.y, drawing); 
+}
+
+function setDrawingMode(event) {
+	var cursorPosition = getCursorPosition(event);
+	if (cursorPosition.x + cursorPosition.y == 0) {
+		toggleTestMode();
+		return "extra_position_command_test";
+	}
+	else {
+		drawing = (shape_status[cursorPosition.y][cursorPosition.x] == 0);
+	}
+	return "";
+	
+}
+
+function toggleTestMode() {
+	testing = !testing;
+}
+
+// canvas.addEventListener('click', getCursorPosition, false);
+canvas.addEventListener('mousedown', function(event) {
+	if (!testing) fill_color = randomColor();
+	if (setDrawingMode(event) != "extra_position_command_test")
+		fillBoxAtCursorPosition(event);
+	canvas.addEventListener('mousemove', fillBoxAtCursorPosition, false)
+});
+
+canvas.addEventListener('mouseup', function(e) {
+	canvas.removeEventListener('mousemove', fillBoxAtCursorPosition, false);
+});
+
+// =============================================================
+
+function initValue_Render() {
+	// shape = kuma;
+	shape = shape.concat(shape2).concat(shape3);
+	rowShape = shape.length;
+	colShape = shape[0].length;
+
+	for (var i = 0; i < rowShape; i++) {
+		shape[i] = shape[i].split('');
+	}
+}
+
+function running() {
+	canRun = (canRun + 1) % 2;
+	render();
+}
+
+function changingColor() {
+	canChangeColor = (canChangeColor + 1) % 2;
+	render();
+}
+
+function clearCanvas() {
+	check_clear = true;
+	render();
+}
+
+function savePattern() {
+	shape = [];
+	shape_status.forEach(function(shape_row) {
+		shape.push(shape_row.slice());
+	});
+}
+
+function normalRender() {
+	check_clear = false;
+	shift_row = 0;
+	render();
+}
+
+function render() {
+	// context.fillStyle = "black"; // black is borderColor
+	context.fillStyle = borderColor = randomColor(); // black is borderColor
+	context.fillRect(0, 0, width, height);
+
+	for (var y = 0; y < row; y++) {
+		for (var x = 0; x < col; x++) {
+			if (canChangeColor && !testing) fill_color = randomColor();
+			// fillBox(x, y, shape_status[y][x]);
+			// fillBox(x, y, shape2[(y+shift_row)%row][x] == 1);
+			try {
+				fillBox(x, y, !check_clear && (shape[(y+shift_row)%(rowShape)][x] == "1")); // shape_status[y][x] --> boolean
+			}
+			catch (e) { // bug array
+				fillBox(x, y, false)
+			}
+		}
+	}
+	// check_clear = false;
+}
+
+function randomColor() {
+	color = Math.floor(Math.random() * 360);
+	return "hsl(" + color + ", 60%, 50%)"; // MagicNumber
+}
+
+function drawBorder(x, y, check_fill) {
+	// context.fillStyle = (check_fill ? "white" : borderColor); // drawingMode
+	if (check_fill) {
+		context.fillStyle = "white";
+		context.fillRect(x * box_size - border, y * box_size - border, box_size + border, box_size + border);
+	}
+}
+
+function fillBox(x, y, check_fill) {
+	drawBorder(x, y, check_fill);
+	context.fillStyle = check_fill ?  fill_color : "black"; // black is freeBoxColor
+	context.fillRect(x * box_size, y * box_size, box_size - border, box_size - border);
+	shape_status[y][x] = check_fill + 0; // update shape : )
+}
+
+// ============== Control ==========================
+function testMode() {
+	testing = true;
+	fill_color = randomColor();
+}
+
+function shiftLeft() {
+	for (var i = 0; i < rowShape; i++) {
+		shape[i].push(shape[i].shift());
+	}
+	render();
+	// savePattern();
+}
+
+function shiftRight() {
+	for (var i = 0; i < rowShape; i++) {
+		shape[i] = [shape[i].pop()].concat(shape[i]);
+	}
+	render();
+	// savePattern();
+}
+
+// ============== Control ==========================
+
+initValue_GenShape();
+
+initValue_Render();
+render();
+
+// testMode();
+
+setInterval(function() {
+	if ((canRun || canChangeColor) && !testing) render();
+}, 100);
+
+setInterval(function() {
+	if (canRun && !testing) shift_row++;
+}, 100);
+</script>
+
+</body>
+</html>
